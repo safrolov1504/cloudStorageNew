@@ -1,0 +1,71 @@
+            {
+                if(read == CreatCommand.getSendFile()){
+                    state = State.NAME_LENGTH;
+                } else if(read == CreatCommand.getSendListFileFromService()) {
+                    //System.out.println("get command to send list "+ CreatCommand.getSendListFileFromService());
+                    //sendList(ctx);
+                    listFilesServer.sedList(ctx,userName);
+                    //break;
+                } else if(read == CreatCommand.getGetFile()){
+                    state = State.NAME_LENGTH;
+                    stateSecond = StateSecond.NEXT_HANDLER;
+                    strings[0] = "SEND_FILE_TO_CLIENT";
+                } else if (read == CreatCommand.getDelFileFromServer()){
+                    state = State.NAME_LENGTH;
+                    stateSecond = StateSecond.NEXT_HANDLER;
+                    strings[0] = "DEL_FILE_FROM_SERVER";
+                }
+                else {
+                    System.out.println("ERROR: Invalid first byte - " + read);
+                    //сделать переход в статус перекидования в следующий handler
+                    //state = State.NEXT_HANDLER;
+                }
+            }
+
+
+
+
+
+                while (buf.readableBytes() > 0){
+                    if(fileLength < SIZE_CASH){
+                        cash = new byte[SIZE_CASH];
+                    }
+                    tmp = buf.readableBytes();
+                    if(tmp >= cash.length){
+                        System.out.println("here");
+                        buf.readBytes(cash);
+                        fileOutputStream.write(cash);
+                        fileLength -= cash.length;
+
+                        if(fileLength == 0){
+                            System.out.println("Server: File was gotten from " + userName+", name file "+ fileName +", size file "+ receivedFileLength);
+                            SendBack.sendBack(ctx, CreatCommand.getSendFileOk());
+                            state = State.IDLE;
+                            break;
+                        }
+                    }
+                }
+
+                //                while (buf.readableBytes() > 0){
+                //
+                //
+                //                    cash[i] = buf.readByte();
+                //                    i++;
+                //                    receivedFileLength ++;
+                //
+                //                    if(i == cash.length){
+                //                        i = 0;
+                //                        //System.out.println(Arrays.toString(cash));
+                //                        fileOutputStream.write(cash);
+                //                        if((fileLength-receivedFileLength) < SIZE_CASH){
+                //                            cash = new byte[(int)(fileLength-receivedFileLength)];
+                //                        }
+                //                    }
+                //
+                //                    if(fileLength == receivedFileLength){
+                //                        state = State.IDLE;
+                //                        System.out.println("Server: File was gotten from " + userName+", name file "+ fileName +", size file "+ receivedFileLength);
+                //                        SendBack.sendBack(ctx, CreatCommand.getSendFileOk());
+                //                        break;
+                //                    }
+                //                }
