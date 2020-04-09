@@ -13,6 +13,7 @@ import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
 import java.io.*;
+import java.util.Arrays;
 
 public class GetMessage {
 
@@ -22,22 +23,25 @@ public class GetMessage {
 
     private static int CASH_SIZE = 1024*3;
     private byte [] cash = new byte[CASH_SIZE];
+    private long lengthFile;
+    private File file;
 
     public GetMessage() {
-        //this.workFile = new WorkFile();
     }
 
     public void setController(Controller controller) {
         this.controller = controller;
-        //workFile.setController(controller);
     }
 
     public void getListFile(String str){
         fileDataService.clear();
 
-        String [] subString = str.split(FileForTable.getEnd());
-        for (String strFile:subString) {
-            fileDataService.add(new FileForTable(strFile));
+
+        if(!str.equals("")){
+            String [] subString = str.split(FileForTable.getEnd());
+            for (String strFile:subString) {
+                fileDataService.add(new FileForTable(strFile));
+            }
         }
         System.out.println("Client: End to get list file from server");
         controller.getWorkWithTables().addInfoTableService(fileDataService);
@@ -46,41 +50,44 @@ public class GetMessage {
     //get file from server
     public void getFileFromService(String nameFile, DataInputStream inputStream) {
         //get length of file
-        long lengthFile = 0;
+
         try {
+            lengthFile = 0;
+            cash = new byte[CASH_SIZE];
+
+            //get length file
             lengthFile = inputStream.readLong();
-        } catch (IOException e) {
-            System.out.println("Client ERROR: " + e.getMessage());
-            e.printStackTrace();
-        }
-        //controller.pb_server.
-        System.out.println("Client: Start to get file from service "+ nameFile +" size: "+lengthFile);
 
-        File file = new File("cloud-client/storage/"+nameFile);
+            System.out.println("Client: Start to get file from service "+ nameFile +" size: "+lengthFile);
 
-        try (OutputStream fileOutputStream = new FileOutputStream(file)){
-            int i=0;
-            while (lengthFile>0) {
-                if (lengthFile < CASH_SIZE) {
-                    cash = new byte[(int) lengthFile];
+            file = new File("cloud-client/storage/"+nameFile);
+
+            try (OutputStream fileOutputStream = new FileOutputStream(file)){
+                while (lengthFile>0) {
+                    if (lengthFile < CASH_SIZE) {
+                        cash = new byte[(int) lengthFile];
+                    }
+                    inputStream.read(cash);
+                    fileOutputStream.write(cash);
+                    //System.out.println(Arrays.toString(cash));
+                    lengthFile -= cash.length;
                 }
-                inputStream.read(cash);
-                fileOutputStream.write(cash);
-                lengthFile -= cash.length;
-            }
 
-            System.out.println("Client: End to get file from service "+ nameFile +" size: "+lengthFile);
-            controller.getWorkWithTables().updateTableClient();
-            Platform.runLater(() ->CreatAlert.setAlert(Alert.AlertType.INFORMATION,
-                    "File", "File was got"));
-        } catch (FileNotFoundException e) {
-            System.out.println("Client ERROR: " + e.getMessage());
-            e.printStackTrace();
+                System.out.println("Client: End to get file from service "+ nameFile +" size: "+lengthFile);
+                controller.getWorkWithTables().updateTableClient();
+                Platform.runLater(() ->CreatAlert.setAlert(Alert.AlertType.INFORMATION,
+                        "File", "File was got"));
+            } catch (FileNotFoundException e) {
+                System.out.println("Client ERROR: " + e.getMessage());
+                e.printStackTrace();
+            } catch (IOException e) {
+                System.out.println("Client ERROR: " + e.getMessage());
+                e.printStackTrace();
+            }
         } catch (IOException e) {
             System.out.println("Client ERROR: " + e.getMessage());
             e.printStackTrace();
         }
-
     }
 
     //get information from server about authentication

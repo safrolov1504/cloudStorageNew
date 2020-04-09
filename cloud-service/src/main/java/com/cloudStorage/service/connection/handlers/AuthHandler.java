@@ -9,6 +9,8 @@ import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import java.io.File;
+
 public class AuthHandler extends ChannelInboundHandlerAdapter {
 //    public enum State {
 //        IDLE, NAME_LENGTH, NAME, PASS_LENGTH, PASS, GET, NEXT
@@ -78,6 +80,11 @@ public class AuthHandler extends ChannelInboundHandlerAdapter {
                     //в случае удачной авторизации удаляем этом handler и создаем, который обрабатыват команды
                     buf.writeByte(CreatCommand.getCommandAuthOk());
 
+                    //creat folders if it needs
+                    File file = new File("cloud-service/global-storage/"+userName);
+                    if(!file.exists()){
+                        file.mkdirs();
+                    }
                     ctx.pipeline().addLast(new FileHandler(userName));//,new EditFileHandler());//, new EditFileHandler());
                     ctx.pipeline().remove(this);
 

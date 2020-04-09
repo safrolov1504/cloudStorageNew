@@ -27,6 +27,13 @@ public class Network {
     private GetMessage getMessage;
     private static int SIZE_CASH = 1024;
 
+    //for method get String
+    private byte [] byteIn;
+    private byte [] cash;
+    private int getSize;
+    private StringBuilder sb;
+    private int length;
+
     public GetMessage getGetMessage() {
         return getMessage;
     }
@@ -106,43 +113,33 @@ public class Network {
         }
     }
 
+
+
     public String getStringFromServer() throws IOException {
-        byte [] byteIn;
-        byte [] cash = new byte[SIZE_CASH];
-        int getSize = 0;
 
         //waiting for size of string (name or list from service)
-        int length = inputStream.readInt();
-        //System.out.println(length);
-
-        byteIn = new byte[length];
+        length = inputStream.readInt();
 
         if(length < SIZE_CASH){
+            //if length < size of cash
+            byteIn = new byte[length];
             inputStream.read(byteIn);
+            return new String(byteIn,"UTF-8");
         }
         else {
+            sb.delete(0,sb.length());
             getSize = 0;
+            cash = new byte[SIZE_CASH];
             while (getSize < length) {
                 if (length - getSize < SIZE_CASH) {
                     cash = new byte[length - getSize];
                 }
                 inputStream.read(cash);
-                byteIn = addArray(byteIn,getSize,cash);
+                sb.append(new String(cash,"UTF-8"));
                 getSize += SIZE_CASH;
-//                System.out.println("cash: "+ cash.length+" "+Arrays.toString(cash));
-//                System.out.println("byte in : "+Arrays.toString(byteIn));
             }
         }
-        //System.out.println(byteIn.length+ " " + Arrays.toString(byteIn));
-        //String strOut = new String(byteIn,"UTF-8");
-        return new String(byteIn,"UTF-8");
-    }
-
-    private byte[] addArray(byte[] bigArray, int firstEmptyPosition, byte[] additionArray){
-        for (int i = 0; i < additionArray.length; i++) {
-            bigArray[i+firstEmptyPosition] = additionArray[i];
-        }
-        return bigArray;
+        return sb.toString();
     }
 
     public void send(int intIn) {
@@ -168,8 +165,15 @@ public class Network {
     }
     public void send(byte[] outByte) {
         try {
-            //System.out.println(Arrays.toString(outByte));
             outputStream.write(outByte);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void send(byte[] outByte,int off,int length) {
+        try {
+            outputStream.write(outByte,off,length);
         } catch (IOException e) {
             e.printStackTrace();
         }

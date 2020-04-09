@@ -12,6 +12,10 @@ public class SendMessage {
     private Network network;
     private static int CASH_SIZE = 1024;
 
+    private long lengthFile;
+    private byte[] byteArray;
+    private int i;
+
     public SendMessage(Network network) {
         this.network = network;
     }
@@ -25,13 +29,10 @@ public class SendMessage {
         network.send(pass.getBytes());
     }
 
-
     public void sendFileToServer(File file) {
         try(InputStream fileInputStream = new FileInputStream(file.getPath())) {
-//        FileInputStream fileInputStream = new FileInputStream(file.getPath());
-            long lengthFile = file.length();
-            byte[] byteArray = new byte[CASH_SIZE];
-            int i;
+            lengthFile = file.length();
+            byteArray = new byte[CASH_SIZE];
 
             //send command
             network.send(CreatCommand.getSendFile());
@@ -46,12 +47,14 @@ public class SendMessage {
             //start working with file
             System.out.println("Client: send file to server: start "+file.getName()+ "length "+ lengthFile);
             while (lengthFile > 0) {
+                i = fileInputStream.read(byteArray);
                 if (lengthFile < CASH_SIZE) {
                     byteArray = new byte[(int) lengthFile];
+                    network.send(byteArray,0, (int) lengthFile);
+                } else {
+                    network.send(byteArray);
                 }
-                i = fileInputStream.read(byteArray);
                 lengthFile -= i;
-                network.send(byteArray);
             }
             System.out.println("Client: send file to server: finish "+file.getName()+ "length "+ lengthFile);
         } catch (FileNotFoundException e) {
@@ -59,8 +62,6 @@ public class SendMessage {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        //fileInputStream.close();
     }
 
     public void sendRequestToGetListFileFromService() {
